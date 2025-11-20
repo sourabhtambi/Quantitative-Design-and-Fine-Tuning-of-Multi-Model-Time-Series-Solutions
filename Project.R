@@ -1,4 +1,3 @@
-
 # Import Dataset
 library(quantmod)
 library(forecast)
@@ -17,31 +16,30 @@ sp_ts <- ts(as.numeric(sp_monthly), start = c(2005, 1), frequency = 12)
 plot(sp_ts, type="l", main="S&P 500 Monthly Close Price",
      ylab="Close Price", xlab="Date")
 
-###ARIMA Model
+###ARIMA Model###
 
 par(mfrow=c(1,2))
 Acf(sp_ts, main="ACF")
 Pacf(sp_ts, main="PACF")
 dev.off()
 
-# testing for stationarity (optional, as auto.arima will do this)
-# This will likely show non-stationarity, which is why auto.arima will use d=1 or d=2
 print("ADF Test")
-adf.test(sp_ts, alternative = "stationary")
+adf.test(sp_ts, alternative = "stationary") # testing for stationarity (optional, as auto.arima will do this)
+# This will likely show non-stationarity, which is why auto.arima will use d=1 or d=2
 
 
-# --- Split Data ---
+########### Split Data ###########
 train <- window(sp_ts, end = c(2020, 12))
 test  <- window(sp_ts, start = c(2021, 1))
 
-# --- Fit ARIMA on Training Only ---
+############# Fit ARIMA on Training Only ###############
 fit_train <- auto.arima(train, seasonal=TRUE)
 
-# --- Forecast Same Horizon as Test ---
+############# Forecast Same Horizon as Test ###############
 fcast_train <- forecast(fit_train, h = length(test))
 print(fcast_train)
 
-# --- Plot Training vs Forecast vs Actual ---
+################ Plot Training vs Forecast vs Actual ###########
 plot(fcast_train, main="ARIMA: Training Forecast vs Actual Test Data")
 lines(test, col="red", lwd=2)
 legend("topleft",
@@ -51,12 +49,8 @@ legend("topleft",
        bty = "n")
 
 
-
-
-
-
-
-
+======================================================================
+======================================================================
 ## ARCH and GARCH
 
 ret <- diff(log(sp_close))
@@ -72,9 +66,8 @@ ret_ts <- ts(as.numeric(ret_monthly),
              start=c(2005,2),
              frequency=12)
 
-
-
-
+=======================================================================
+=======================================================================
 ### --- ACF/PACF of returns, |returns|, returns^2 --- ###
 par(mfrow=c(3,2), mar=c(2,2,2,2))
 acf(ret_ts, 25, main="ACF(Returns)")
@@ -94,7 +87,8 @@ par(mfrow=c(2,1))
 plot(hist.vol1, type="l", main="20-Month Historical Volatility")
 plot(hist.vol2, type="l", main="40-Month Historical Volatility")
 
-
+=========================================================================
+==========================================================================
 
 ### --- Fit ARCH(2) model --- ###
 fit1 <- garchFit(~ garch(2,0), data=ret_ts)
@@ -113,6 +107,9 @@ acf(fit1.resid.st, 25, type="partial", main="")
 acf(fit1.resid.st^2, 25, main="")
 acf(fit1.resid.st^2, 25, type="partial", main="")
 
+===========================================================================
+===========================================================================                    
+
 ### --- Fit GARCH(1,1) model --- ###
 fit2 <- garchFit(~ garch(1,1), data=ret_ts)
 fit2.vol <- volatility(fit2)
@@ -127,6 +124,10 @@ acf(fit2.resid.st, 25, main="")
 acf(fit2.resid.st, 25, type="partial", main="")
 acf(fit2.resid.st^2, 25, main="")
 acf(fit2.resid.st^2, 25, type="partial", main="")
+
+===========================================================================
+===========================================================================
+                    
 
 ### --- Fit ARMA(1,1) + GARCH(1,1) --- ###
 fit3 <- garchFit(~ arma(1,1) + garch(1,1), data=ret_ts)
@@ -159,25 +160,24 @@ lines(v2, col="blue", lwd=2)
 legend("bottomright", legend=c("ARCH(2)", "GARCH(1,1)"),
        col=c("black","blue"), lwd=2)
 
+===================================================================================
+==================================================================================
+                    
+                    
+                    
+#################Neural Network ############################
 
-##Neural Network
-
-
-
-# -------------------------------------------------------------
+                    
 nValid <- 36
 train.ts <- window(ret_ts, start = c(2005, 2), end = c(2018, 12))
 valid.ts <- window(ret_ts, start = c(2019, 1), end = c(2021, 12))
 
-# -------------------------------------------------------------
 set.seed(201)
 sp.nnetar <- nnetar(train.ts, repeats = 20, p = 11, P = 1, size = 7)
 summary(sp.nnetar$model[[1]])
 
 sp.nnetar.pred <- forecast(sp.nnetar, h = nValid)
 acc_manual <- accuracy(sp.nnetar.pred, valid.ts)
-
-
 
 
 plot(train.ts,
@@ -201,8 +201,6 @@ lines(ts(sp.nnetar.pred$mean,
          frequency = 12),
       col = "red", lwd = 2, lty = 2)
 
-
-
 # Vertical boundaries
 abline(v = 2019, lwd = 1)
 abline(v = 2022, lwd = 1)
@@ -219,4 +217,5 @@ arrows(2019, max(train.ts)*0.8, 2022, max(train.ts)*0.8,
        code = 3, length = 0.1, angle = 30)
 arrows(2022, max(train.ts)*0.8, 2023, max(train.ts)*0.8,
        code = 3, length = 0.1, angle = 30)
+
 
